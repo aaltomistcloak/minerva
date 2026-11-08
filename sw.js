@@ -2,12 +2,12 @@
    App-Dateien kommen sofort aus dem Speicher und werden im Hintergrund aktualisiert
    (neue Versionen sind beim nächsten Öffnen aktiv). Schriften und Bilder werden zwischengespeichert,
    damit die App auch offline vollständig aussieht. Daten laufen nie über diesen Speicher. */
-const APP = 'minerva-app-v1';
+const APP = 'minerva-app-v2';
 const EXTRA = 'minerva-extra-v1';
 const DATEIEN = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(APP).then(function (c) { return c.addAll(DATEIEN); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(APP).then(function (c) { return c.addAll(DATEIEN.map(function (d) { return new Request(d, { cache: 'reload' }); })); }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
@@ -25,11 +25,15 @@ self.addEventListener('fetch', function (e) {
     const key = req.mode === 'navigate' ? './index.html' : req;
     e.respondWith(caches.open(APP).then(function (c) {
       return c.match(key, { ignoreSearch: true }).then(function (alt) {
-        const neu = fetch(req, { cache: 'no-cache' }).then(function (r) {
+        // Vergleichskopie jetzt ziehen: „alt“ geht gleich an die Seite und ist danach verbraucht
+        const altText = req.mode === 'navigate' && alt ? alt.clone().text() : null;
+        // Seitenaufrufe (navigate) lassen sich nicht mit Optionen weiterreichen, daher über die Adresse holen
+        const neu = fetch(req.mode === 'navigate' ? req.url : req, { cache: 'no-cache' }).then(function (r) {
           if (r && r.ok) {
-            const kopie = r.clone();
-            if (req.mode === 'navigate' && alt) Promise.all([alt.clone().text(), r.clone().text()]).then(function (t) { if (t[0] !== t[1]) melden(); });
-            c.put(key, kopie);
+            const vergleich = altText ? r.clone().text() : null;
+            return c.put(key, r.clone()).then(function () {
+              if (vergleich) return Promise.all([altText, vergleich]).then(function (t) { if (t[0] !== t[1]) melden(); });
+            }).then(function () { return r; });
           }
           return r;
         }).catch(function () { return alt; });

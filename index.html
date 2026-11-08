@@ -697,6 +697,7 @@ button.txt.plain { background: none; border: none; padding: 4px 0; text-align: l
 #app-status[hidden] { display: none; }
 .app-qr { background: #fff; border-radius: 20px; padding: 10px; width: min(300px, 100%); margin: 0 auto; }
 .app-qr svg { display: block; width: 100%; height: auto; }
+.toast.show.klick { pointer-events: auto; cursor: pointer; }
 .app-schritte { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.45; }
 </style>
 </head>
@@ -7775,6 +7776,8 @@ const MINERVA_APP = (function () {
         status();
       });
     };
+    const toast = MINERVA.toast;
+    MINERVA.toast = function () { const t = document.getElementById('toast'); if (t) { t.classList.remove('klick'); t.onclick = null; } return toast.apply(this, arguments); };
     const render = MINERVA.render;
     MINERVA.render = function () { render.apply(this, arguments); sichern(); };
     MINERVA.actions['app.sync'] = function () { MINERVA.actions['g.sync'](); };
@@ -7878,7 +7881,15 @@ const MINERVA_APP = (function () {
     });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function () {});
-      navigator.serviceWorker.addEventListener('message', function (e) { if (e.data === 'neu') MINERVA.toast('Neue Version geladen. Sie ist beim nächsten Öffnen aktiv.'); });
+      const gestartet = Date.now();
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (e.data !== 'neu') return;
+        // Gleich nach dem Öffnen: neue Version sofort laden. Später nicht mitten in der Arbeit stören.
+        if (Date.now() - gestartet < 20000 && !MINERVA.modal && !outbox.length) { location.reload(); return; }
+        MINERVA.toast('Neue Version da. Tippe hier, um sie zu laden.');
+        const t = document.getElementById('toast');
+        if (t) { clearTimeout(MINERVA._tt); t.classList.add('klick'); t.onclick = function () { location.reload(); }; }
+      });
     }
   }
   return { start: start };
