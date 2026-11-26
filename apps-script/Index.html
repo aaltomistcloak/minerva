@@ -2104,7 +2104,7 @@ MINERVA.register('hub', {
     else list = list.slice().sort(function (a, b) { return String(a.Titel).localeCompare(String(b.Titel), 'de'); });
     const summary = '<div class="card glass summary"><div style="display:flex;flex-direction:column;gap:2px"><h1 class="title">Rezeptbuch</h1><span class="sub">' + all.length + ' Rezept' + (all.length === 1 ? '' : 'e') + '</span></div>' +
       '<div class="next" style="gap:10px"><span class="eyebrow">Was könnte ich heute kochen?</span>' +
-      '<label class="sr" for="rz-have">Was hast du da?</label><input id="rz-have" class="input" placeholder="Was hast du da? z. B. Nudeln, Tomaten" value="' + esc(ui.have) + '" data-input="rz.have" autocomplete="off">' +
+      '<label class="sr" for="rz-have">Was hast du da?</label><input id="rz-have" class="input" placeholder="Was hast du da? z. B. Nudeln, Tomaten" value="' + esc(ui.have) + '" data-input="rz.havesuche" autocomplete="off">' +
       '<button class="btn ghost sm" data-act="rz.random">' + ic('shuffle', 16) + ' Überrasch mich</button></div>' +
       (cats.length > 1 ? '<div class="chips" role="group" aria-label="Kategorie">' + ['',].concat(cats).map(function (c) {
         return '<button class="chip" data-act="rz.cat" data-v="' + esc(c) + '" aria-pressed="' + (ui.cat === c) + '">' + esc(c || 'Alle') + '</button>';
@@ -2229,7 +2229,7 @@ MINERVA.register('hub', {
   });
 
   Object.assign(MINERVA.actions, {
-    'rz.have': function (ds, el) {
+    'rz.havesuche': function (ds, el) {
       ui.have = el.value; MINERVA.render();
       const n = document.getElementById('rz-have'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
     },
@@ -4322,7 +4322,7 @@ MINERVA.register('hub', {
       '<ul class="asig">' + l.signale.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') +
       (l.vorher ? '<li>Schon in der Woche davor ' + (l.vorher === 1 ? 'ein Signal' : l.vorher + ' Signale') + '</li>' : '') + '</ul>' +
       '<div style="padding:4px 10px 12px"><div class="ahint strong"><span>' + (l.stufe === 'ernst' ? 'Das ist kein Grund zur Sorge, aber ein Grund, ehrlich hinzuschauen: Passt gerade Gelb oder schon Rot?' : 'Vergleich das kurz mit deiner Frühwarn-Ampel. Oft reicht es, eine Sache diese Woche wegzulassen.') + '</span>' +
-      '<span class="kactions"><button class="btn sm" data-act="gs.ampel" data-k="' + (l.stufe === 'ernst' ? '' : 'gelb') + '">' + ic('ampel', 16) + ' Zur Ampel</button>' +
+      '<span class="kactions"><button class="btn sm" data-act="ge.ampel" data-k="' + (l.stufe === 'ernst' ? '' : 'gelb') + '">' + ic('ampel', 16) + ' Zur Ampel</button>' +
       '<button class="btn ghost sm" data-act="nav.go" data-mod="ariadne" data-sub="navigator">' + ic('ariadne', 16) + ' Navigator</button></span></div></div></section>';
   }
   function kacheln() {
@@ -4356,7 +4356,7 @@ MINERVA.register('hub', {
         if (zahl(w.Schlaf) != null) teile.push(fmt(w.Schlaf, 1) + ' h Schlaf');
         if (w.HRV) teile.push('HRV ' + (HRV_NAME[w.HRV] || w.HRV).toLowerCase());
         const n = signale(w).length;
-        return '<button class="hitem" data-act="gs.edit" data-w="' + esc(w.Woche) + '"><span class="cicon t-blau">' + ic('pulse', 18) + '</span>' +
+        return '<button class="hitem" data-act="ge.edit" data-w="' + esc(w.Woche) + '"><span class="cicon t-blau">' + ic('pulse', 18) + '</span>' +
           '<span class="txt"><b>' + esc(wocheLabel(w.Woche)) + '</b><span class="small">' + esc(teile.join(' · ') || 'nur Notiz') + (n ? ' · ' + n + ' Signal' + (n > 1 ? 'e' : '') : '') + '</span>' +
           (w.Notiz ? '<span class="small" style="font-style:italic">„' + esc(w.Notiz) + '“</span>' : '') + '</span><span style="color:var(--muted);display:flex">' + ic('pen', 18) + '</span></button>';
       }).join('') + '</div>' + (G().length > 12 ? '<p class="small" style="margin:0;padding:8px 16px 12px">Ältere Wochen stehen im Sheet „Gesundheit_Wochen“.</p>' : '') + '</section>';
@@ -4377,12 +4377,12 @@ MINERVA.register('hub', {
       const hat = byWoche(diese());
       const summary = '<div class="card glass summary"><div style="display:flex;flex-direction:column;gap:2px"><h1 class="title">Gesundheit</h1><span class="sub">Einmal pro Woche kurz hinschauen.</span></div>' +
         stufeHtml(l) +
-        '<button class="btn" data-act="gs.new">' + ic(hat ? 'pen' : 'plus', 18) + (hat ? ' Diese Woche ergänzen' : ' Woche eintragen') + '</button>' +
+        '<button class="btn" data-act="ge.new">' + ic(hat ? 'pen' : 'plus', 18) + (hat ? ' Diese Woche ergänzen' : ' Woche eintragen') + '</button>' +
         '<p class="small" style="margin:0">Dauert etwa eine Minute. Alles ist freiwillig, Lücken sind in Ordnung.</p></div>';
       const rechts = G().length ? hinweisPanel(l) + kacheln() + liste() + quellen() :
         '<section class="panel"><div style="padding:18px;display:flex;flex-direction:column;gap:12px"><h2 class="h2" style="margin:0">So funktioniert es</h2>' +
         '<p style="margin:0;line-height:1.55">Du trägst einmal pro Woche ein, wie viel Energie du hattest und wie belastet du warst. Wenn du magst, kommen ein paar Werte aus Garmin Connect dazu. MINERVA vergleicht jede Woche mit deinen eigenen Normalwerten und meldet sich nur, wenn mehrere Signale zusammenkommen – dann mit einem Weg zu deiner Frühwarn-Ampel.</p>' +
-        '<button class="btn" data-act="gs.new" style="align-self:flex-start">' + ic('plus', 18) + ' Erste Woche eintragen</button></div></section>' + quellen();
+        '<button class="btn" data-act="ge.new" style="align-self:flex-start">' + ic('plus', 18) + ' Erste Woche eintragen</button></div></section>' + quellen();
       return topbar('ARIADNE', 'Gesundheit') + '<div class="split ariadne"><div class="summary">' + summary + '</div><div class="stack">' + rechts + '</div></div>';
     }
   });
@@ -4397,42 +4397,45 @@ MINERVA.register('hub', {
   function skala(k, links, rechts) {
     const f = ui.f;
     return '<div class="seg" role="group" aria-label="' + esc(k) + '">' + [1, 2, 3, 4, 5].map(function (i) {
-      return '<button data-act="gs.pick" data-k="' + k + '" data-v="' + i + '" aria-pressed="' + (f[k] === String(i)) + '">' + i + '</button>';
+      return '<button data-act="ge.pick" data-k="' + k + '" data-v="' + i + '" aria-pressed="' + (f[k] === String(i)) + '">' + i + '</button>';
     }).join('') + '</div><div class="gscale"><span>' + esc(links) + '</span><span>' + esc(rechts) + '</span></div>';
   }
   function formHtml() {
     const f = ui.f;
     const wahl = f.fest ? '<p class="sub" style="margin:0">' + esc(wocheLabel(f.woche)) + '</p>' :
       '<div class="seg" role="group" aria-label="Woche">' + [[diese(), 'Diese Woche'], [letzte(), 'Letzte Woche']].map(function (x) {
-        return '<button data-act="gs.woche" data-v="' + x[0] + '" aria-pressed="' + (f.woche === x[0]) + '">' + x[1] + '</button>';
+        return '<button data-act="ge.woche" data-v="' + x[0] + '" aria-pressed="' + (f.woche === x[0]) + '">' + x[1] + '</button>';
       }).join('') + '</div><span class="small" style="margin-top:-6px">' + esc(wocheLabel(f.woche)) + (byWoche(f.woche) ? ' · schon eingetragen, du ergänzt' : '') + '</span>';
     return '<h2 class="mtitle" autofocus>' + (f.id ? 'Woche ergänzen' : 'Woche eintragen') + '</h2>' + wahl +
       '<span class="flabel">Wie viel Energie hattest du?</span>' + skala('Energie', 'leer', 'voll') +
       '<span class="flabel">Wie belastet hast du dich gefühlt?</span>' + skala('Belastung', 'entspannt', 'am Limit') +
       '<span class="flabel">Aus Garmin Connect <span class="small">(alles freiwillig)</span></span>' +
       '<span class="small" style="margin-top:-6px">HRV-Status</span><div class="chips" role="group" aria-label="HRV-Status">' + HRV.map(function (h) {
-        return '<button class="chip" data-act="gs.hrv" data-v="' + h[0] + '" aria-pressed="' + (f.HRV === h[0]) + '">' + h[1] + '</button>';
+        return '<button class="chip" data-act="ge.hrv" data-v="' + h[0] + '" aria-pressed="' + (f.HRV === h[0]) + '">' + h[1] + '</button>';
       }).join('') + '</div>' +
       '<div class="gform">' + NUM.map(function (n) {
         return '<label class="gfeld"><span class="small">' + esc(n.label) + (n.einheit ? ' (' + n.einheit + ')' : '') + '</span>' +
-          '<input id="gs-' + n.k + '" class="input" inputmode="decimal" autocomplete="off" data-fresh data-input="gs.in" data-k="' + n.k + '" placeholder="' + esc(n.ph) + '" value="' + esc(f[n.k]) + '">' +
+          '<input id="ge-' + n.k + '" class="input" inputmode="decimal" autocomplete="off" data-fresh data-input="ge.in" data-k="' + n.k + '" placeholder="' + esc(n.ph) + '" value="' + esc(f[n.k]) + '">' +
           '<span class="small">' + esc(n.hilfe) + '</span></label>';
       }).join('') + '</div>' +
-      field('gs-Notiz', 'Was war los? (optional)', '<input id="gs-Notiz" class="input" maxlength="300" data-fresh data-input="gs.in" data-k="Notiz" placeholder="z. B. Umzug, Projektende, krank" value="' + esc(f.Notiz) + '">') +
-      '<div class="grid2"><button class="btn ghost" data-act="modal.close">Abbrechen</button><button class="btn" data-act="gs.save">Speichern</button></div>' +
-      (f.id ? '<button class="btn ghost sm" data-act="gs.del" style="align-self:center">' + ic('trash', 16) + ' Woche entfernen</button>' : '');
+      field('ge-Notiz', 'Was war los? (optional)', '<input id="ge-Notiz" class="input" maxlength="300" data-fresh data-input="ge.in" data-k="Notiz" placeholder="z. B. Umzug, Projektende, krank" value="' + esc(f.Notiz) + '">') +
+      '<div class="grid2"><button class="btn ghost" data-act="modal.close">Abbrechen</button><button class="btn" data-act="ge.save">Speichern</button></div>' +
+      (f.id ? '<button class="btn ghost sm" data-act="ge.del" style="align-self:center">' + ic('trash', 16) + ' Woche entfernen</button>' : '');
   }
-  function open(woche, fest) { ui.f = formFuer(woche, fest); MINERVA.openModal(formHtml); }
+  function open(woche, fest) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(woche || ''))) { woche = diese(); fest = false; }
+    ui.f = formFuer(woche, fest); MINERVA.openModal(formHtml);
+  }
 
   Object.assign(MINERVA.actions, {
-    'gs.new': function () { open(diese(), false); },
-    'gs.edit': function (ds) { open(ds.w, true); },
-    'gs.woche': function (ds) { ui.f = formFuer(ds.v, false); MINERVA.renderModal(); },
-    'gs.pick': function (ds) { ui.f[ds.k] = ui.f[ds.k] === ds.v ? '' : ds.v; MINERVA.renderModal(); },
-    'gs.hrv': function (ds) { ui.f.HRV = ui.f.HRV === ds.v ? '' : ds.v; MINERVA.renderModal(); },
-    'gs.in': function (ds, el) { if (ui.f) ui.f[ds.k] = el.value; },
-    'gs.ampel': function (ds) { if (MINERVA.ariadneAmpel) MINERVA.ariadneAmpel(ds.k || null); else MINERVA.go('ariadne', 'ampel'); },
-    'gs.save': function () {
+    'ge.new': function () { open(diese(), false); },
+    'ge.edit': function (ds) { open(ds.w, true); },
+    'ge.woche': function (ds) { ui.f = formFuer(ds.v, false); MINERVA.renderModal(); },
+    'ge.pick': function (ds) { ui.f[ds.k] = ui.f[ds.k] === ds.v ? '' : ds.v; MINERVA.renderModal(); },
+    'ge.hrv': function (ds) { ui.f.HRV = ui.f.HRV === ds.v ? '' : ds.v; MINERVA.renderModal(); },
+    'ge.in': function (ds, el) { if (ui.f) ui.f[ds.k] = el.value; },
+    'ge.ampel': function (ds) { if (MINERVA.ariadneAmpel) MINERVA.ariadneAmpel(ds.k || null); else MINERVA.go('ariadne', 'ampel'); },
+    'ge.save': function () {
       const f = ui.f; if (!f) return;
       const w = { woche: f.woche, Energie: f.Energie, Belastung: f.Belastung, HRV: f.HRV, Notiz: String(f.Notiz || '').trim() };
       let fehler = '';
@@ -4454,7 +4457,7 @@ MINERVA.register('hub', {
       MINERVA.toast(l.stufe === 'achtsam' || l.stufe === 'ernst' ? 'Gespeichert. Schau dir kurz an, was auffällt.' : 'Gespeichert. Danke fürs Hinschauen.');
       MINERVA.call('gesundSave', [w], 'gesund');
     },
-    'gs.del': function () {
+    'ge.del': function () {
       const f = ui.f; if (!f || !f.id) return;
       MINERVA.confirmDelete({ simple: true, title: 'Woche entfernen?', text: wocheLabel(f.woche) + ' wird aus deinem Verlauf entfernt.', onConfirm: function () {
         MINERVA.data.gesund = { wochen: G().filter(function (x) { return x.ID !== f.id; }) };
